@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 from pathlib import Path
-load_dotenv(Path(__file__).parent.parent.parent / ".env")
+
+env_path = Path(__file__).resolve().parents[2] / ".env"
+load_dotenv(env_path, override=True)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +19,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="AI Hedge Fund API", description="Backend API for AI Hedge Fund", version="0.1.0")
-
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 # Initialize database tables (this is safe to run multiple times)
 Base.metadata.create_all(bind=engine)
 
@@ -32,6 +36,9 @@ app.add_middleware(
 
 # Include all routes
 app.include_router(api_router)
+
+from app.backend.routes.pageindex import router as pageindex_router
+app.include_router(pageindex_router)
 
 @app.on_event("startup")
 async def startup_event():
